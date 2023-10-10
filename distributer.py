@@ -280,7 +280,7 @@ async def message_hand_out(bot: Bot, event: Event) -> str:
                     ]): # 如果请求信息是功能名
                         event.message = Message('>> help') # 伪造信息
                         if (help_reply := await plugin_info['plugin'].help(bot, event)) != 'None': # 有帮助返回
-                            if len(help_reply) >= 1000: # 如果帮助较长
+                            if len(help_reply) >= 200: # 如果帮助较长
                                 help_reply = MessageSegment.image(
                                     text_to_image(Message(help_reply))
                                 )
@@ -293,7 +293,7 @@ async def message_hand_out(bot: Bot, event: Event) -> str:
                     help_tasks.append(asyncio.create_task(plugin_dict[plugin_name]['plugin'].help(bot, event)))
                 for help_task in help_tasks: # 执行任务列表
                     if (help_reply := (await asyncio.gather(help_task))[0]) != 'None': # 有帮助返回
-                        if len(help_reply) >= 1000: # 如果帮助较长
+                        if len(help_reply) >= 200: # 如果帮助较长
                             help_reply = MessageSegment.image(
                                 text_to_image(Message(help_reply))
                             )
@@ -335,7 +335,7 @@ def refresh_plugin() -> dict:
         fn_dir = os.path.dirname(os.path.abspath(__file__))
     
         pre_stack = [plugin] # 模块预存放栈
-        stack = [] # 模块存放栈
+        stack: list[types.ModuleType] = [] # 模块存放栈
         while pre_stack: # 迭代存放
             module = pre_stack.pop() # 取出栈中第一个模块
             stack.append(module)
@@ -345,7 +345,10 @@ def refresh_plugin() -> dict:
                     fn_child = getattr(attribute, '__file__', None) # 获取对象路径
                     if isinstance(fn_child, str): # 如果存在路径且为程序所在路径
                         if os.path.normcase(fn_child).startswith(os.path.normcase(fn_dir)):
-                            pre_stack.append(attribute) # 放入栈中
+                            if fn_child.endswith('utils.py'): # 优先加载 utils.py
+                                importlib.reload(attribute)
+                            else:
+                                pre_stack.append(attribute) # 放入栈中
         while stack: # 迭代重新加载
             module = stack.pop(-1)
             importlib.reload(module)
@@ -362,6 +365,7 @@ def refresh_plugin() -> dict:
             _reload_recursive_in_iter(plugin)
         except Exception as exception:
             print(f'导入插件 {plugin_name} 时出错：{exception}')
+            Logging.info(f'导入插件 {plugin_name} 时出错：{exception}')
             continue
         
         plugin_dict[plugin_name] = {'plugin': plugin}
