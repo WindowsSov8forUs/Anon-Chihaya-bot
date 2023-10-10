@@ -11,15 +11,15 @@ from adapter.utils import Logging
 from adapter.adapter import Adapter
 
 # 反向监听端口
-PORT = 12365
+PORT = 5700
 
 # 生成 Flask 类的 app 实例
 app = Flask(__name__)
 # 创建一个 bot 实例
 bot = Bot(
-    1953421488, # 机器人 ID
-    1242954863, # 主人 ID
-    Adapter(port_send=12312) # 监听端口
+    123456, # 机器人 ID
+    123321, # 主人 ID
+    Adapter(port_send=5701) # 监听端口
 )
 
 # 收取消息处理
